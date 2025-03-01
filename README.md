@@ -2,49 +2,50 @@
 
 ## Italiano
 
-Questa applicazione permette di:
-1. **Inviare** un byte “ridondante” a `PS_IP:33739` per innescare l'invio di telemetria.  
-2. **Ricevere** i pacchetti su porta `33740`.  
-3. **Decrittare** con **Salsa20** (key `'Simulator Interface Packet GT7 ver 0.0'`), controllando il magic number `0x47375330`.  
-4. **Decodificare** i 296 byte con la classe `GTData` in `gtdata.py` (unità di misura coerenti: car_speed km/h, best_lap s, throttle [0..100]%...).  
-5. **Salvare** i dati su SQLite (db_manager).  
-6. **Addestrare** un modello ML (TensorFlow CPU) per stime (best_lap, ecc.).  
-7. **LLM locale** (GPT-2) per suggerimenti testuali.  
-8. **GUI** (Tkinter) con IP, Auto, Gomme, Circuito, pulsanti Start/Stop/Analyze, e “Feedback” con l’LLM.
+Questa applicazione:
+1. **Invia** ripetutamente un byte (`b'\x01'`) a `PS_IP:33739` per tenere attiva la telemetria.
+2. **Riceve** i pacchetti su `porta 33740` in un listener.
+3. **Decritta** i dati con Salsa20 (magic number `0x47375330`).
+4. **Decodifica** i 296 byte (classe `GTData`), convertendo `car_speed` in km/h, `best_lap`/`last_lap` ms→s, `throttle`/`brake` in [0..100]%, ecc.
+5. **Salva** su SQLite (`db_manager`).
+6. **Addestra** un modello ML (TensorFlow CPU) per fornire consigli numerici (es. best_lap).
+7. **Usa** un LLM locale (GPT-2) per suggerimenti testuali in linguaggio naturale.
+8. **GUI** con campi IP, auto, gomme, circuito, pulsanti “Start”, “Stop”, “Analyze”, e feedback con l’LLM.
 
 ### Avvio
 1. `pip install -r requirements.txt`
 2. `python main.py`
-3. Inserisci IP della PlayStation, ad es. “192.168.1.10”.
-4. Inserisci Auto/Gomme/Circuito, clicca **Start**:  
-   - Invia un byte a porta 33739, la PS inizia a mandare telemetria su 33740.  
-5. **Stop** quando hai abbastanza dati, poi **Analyze** per allenare il modello ML. L’LLM fornisce consigli testuali.  
-6. “Feedback” consente di scrivere domande all’LLM.
+3. Inserire l’IP della PlayStation e altre info (auto/gomme/circuito).
+4. **Start**: avvia un thread che invia 1 byte/sec su `porta 33739`, e ascolta su `porta 33740`. GT7 invierà telemetria a 33740.
+5. **Stop**: ferma listener e invio byte.
+6. **Analyze**: addestra il modello ML con i dati raccolti, e l’LLM fornisce un consiglio testuale.
+7. Sezione “Feedback” per interagire con l’LLM.
 
 ### TOS
-L’uso di protocolli non documentati e la decrittazione dei pacchetti GT7 può violare i Termini di Servizio di Sony/Polyphony Digital (reverse engineering, uso dati di gioco). Agisci a tuo rischio.
+L’uso di protocolli non documentati e la decrittazione dei pacchetti GT7 potrebbe violare i Termini di Servizio (reverse engineering, uso non autorizzato di dati di gioco). Usare a proprio rischio.
 
 ---
 
 ## English
 
 This application:
-1. **Sends** a “redundant” byte to `PS_IP:33739` to trigger telemetry.  
-2. **Receives** packets on port `33740`.  
-3. **Decrypts** with **Salsa20** (key `'Simulator Interface Packet GT7 ver 0.0'`), checking magic `0x47375330`.  
-4. **Decodes** the 296-byte structure in `gtdata.py` (car speed in km/h, times in s, throttle in [0..100]%...).  
-5. **Stores** data in SQLite.  
-6. **Trains** a local ML model (TensorFlow CPU) for numeric suggestions.  
-7. **Local LLM** (GPT-2) for textual advice.  
-8. **GUI** (Tkinter) with fields: IP, Car, Tyres, Circuit, plus “Start/Stop/Analyze” and “Feedback” for LLM Q&A.
+1. **Repeatedly sends** a byte (`b'\x01'`) to `PS_IP:33739` to keep telemetry active.
+2. **Receives** packets on port 33740 in a listener thread.
+3. **Decrypts** data via Salsa20 (magic `0x47375330`).
+4. **Decodes** 296 bytes (class `GTData`), converting car_speed m/s->km/h, best_lap ms->s, throttle [0..100]%, etc.
+5. **Stores** in SQLite.
+6. **Trains** a local ML model (TensorFlow CPU) for numeric advice.
+7. **Uses** a local LLM (GPT-2) for textual suggestions.
+8. **GUI** with IP, car, tyres, circuit, Start/Stop/Analyze, and a feedback field for LLM Q&A.
 
 ### Usage
 1. `pip install -r requirements.txt`
 2. `python main.py`
-3. Provide PlayStation IP, e.g. “192.168.1.10”.  
-4. Press **Start**: a byte is sent to port 33739, telemetry arrives on 33740.  
-5. **Stop** after enough laps, **Analyze** trains ML. LLM gives textual tips.  
-6. “Feedback” can ask the LLM more questions.
+3. Enter PlayStation IP, etc.
+4. **Start**: a thread sends 1 byte/second to `port 33739`, receiving telemetria on `33740`.
+5. **Stop**: halts both sending and listening.
+6. **Analyze**: trains ML with gathered data, LLM provides textual tips.
+7. “Feedback” for LLM queries.
 
-### ToS Warning
-Intercepting/decrypting GT7 packets may violate Sony/Polyphony Digital’s Terms of Service regarding reverse engineering and unauthorized use of game data. Use at your own risk.
+### TOS Warning
+Intercepting/decrypting GT7 packets may violate Sony/Polyphony Digital Terms of Service regarding reverse engineering and unauthorized use of game data. Use at your own risk.
