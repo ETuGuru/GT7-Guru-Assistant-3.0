@@ -2,68 +2,49 @@
 
 ## Italiano
 
-Questa applicazione consente di:
-1. **Intercettare** la telemetria di Gran Turismo 7 da un IP configurabile (PlayStation).
-2. **Decrittare** i pacchetti con **Salsa20** (vedi `gt7communication.py`), controllando il magic number `0x47375330`.
-3. **Decodificare** i 296 byte con la classe `GTData` (in `gtdata.py`), convertendo:
-   - Velocità auto da m/s a km/h
-   - Velocità ruote in m/s
-   - Tempi (best_lap, last_lap) da ms a s
-   - Throttle/Brake da [0..255] a [0..100]%, ecc.
-4. **Salvare** i dati in un database SQLite (db_manager).
-5. **Addestrare** un modello ML (TensorFlow su CPU) per fornire consigli numerici (es. best_lap).
-6. **Usare** un LLM locale (GPT-2) per suggerimenti testuali.
-7. **GUI** (Tkinter) con campi:
-   - IP Playstation
-   - Auto (nome+anno)
-   - Gomme
-   - Circuito
-   + Pulsanti "Start", "Stop", "Analyze" e un'area di feedback con l’LLM.
+Questa applicazione permette di:
+1. **Inviare** un byte “ridondante” a `PS_IP:33739` per innescare l'invio di telemetria.  
+2. **Ricevere** i pacchetti su porta `33740`.  
+3. **Decrittare** con **Salsa20** (key `'Simulator Interface Packet GT7 ver 0.0'`), controllando il magic number `0x47375330`.  
+4. **Decodificare** i 296 byte con la classe `GTData` in `gtdata.py` (unità di misura coerenti: car_speed km/h, best_lap s, throttle [0..100]%...).  
+5. **Salvare** i dati su SQLite (db_manager).  
+6. **Addestrare** un modello ML (TensorFlow CPU) per stime (best_lap, ecc.).  
+7. **LLM locale** (GPT-2) per suggerimenti testuali.  
+8. **GUI** (Tkinter) con IP, Auto, Gomme, Circuito, pulsanti Start/Stop/Analyze, e “Feedback” con l’LLM.
 
 ### Avvio
 1. `pip install -r requirements.txt`
 2. `python main.py`
-3. Inserire IP della PS (es. "192.168.1.10"), Auto/Gomme/Circuito, cliccare **Start**.
-4. Dopo alcuni giri, **Stop**, poi **Analyze** per allenare il ML e ottenere un consiglio. L’LLM fornirà anche un testo discorsivo.  
-5. La sezione "Feedback" consente di interagire con l’LLM.
+3. Inserisci IP della PlayStation, ad es. “192.168.1.10”.
+4. Inserisci Auto/Gomme/Circuito, clicca **Start**:  
+   - Invia un byte a porta 33739, la PS inizia a mandare telemetria su 33740.  
+5. **Stop** quando hai abbastanza dati, poi **Analyze** per allenare il modello ML. L’LLM fornisce consigli testuali.  
+6. “Feedback” consente di scrivere domande all’LLM.
 
-### Potenziali violazioni dei ToS
-L’intercettazione e la decrittazione di pacchetti GT7 può violare i Termini di Servizio di Sony/Polyphony Digital, in particolare:
-- Divieto di reverse-engineering e protocolli non documentati
-- Uso di dati di gioco non autorizzato
-Usare a proprio rischio e consultare i TOS.
+### TOS
+L’uso di protocolli non documentati e la decrittazione dei pacchetti GT7 può violare i Termini di Servizio di Sony/Polyphony Digital (reverse engineering, uso dati di gioco). Agisci a tuo rischio.
 
 ---
 
 ## English
 
-This application allows:
-1. **Intercepting** Gran Turismo 7 telemetry from a user-specified IP (PlayStation).
-2. **Decrypting** packets via **Salsa20** (see `gt7communication.py`), checking magic number `0x47375330`.
-3. **Decoding** the 296-byte data with `GTData` (`gtdata.py`), converting:
-   - Car speed m/s -> km/h
-   - Wheel speeds in m/s
-   - Lap times ms -> s
-   - Throttle/Brake [0..255] -> [0..100]%, etc.
-4. **Saving** into an SQLite database.
-5. **Training** a local ML model (TensorFlow CPU) for numeric advice (e.g. best_lap).
-6. **Using** a local LLM (GPT-2) for textual suggestions.
-7. **Tkinter GUI**: 
-   - IP address of PS
-   - Car name/year
-   - Tyre type
-   - Circuit variant
-   + "Start", "Stop", "Analyze", and a feedback chat area for the LLM.
+This application:
+1. **Sends** a “redundant” byte to `PS_IP:33739` to trigger telemetry.  
+2. **Receives** packets on port `33740`.  
+3. **Decrypts** with **Salsa20** (key `'Simulator Interface Packet GT7 ver 0.0'`), checking magic `0x47375330`.  
+4. **Decodes** the 296-byte structure in `gtdata.py` (car speed in km/h, times in s, throttle in [0..100]%...).  
+5. **Stores** data in SQLite.  
+6. **Trains** a local ML model (TensorFlow CPU) for numeric suggestions.  
+7. **Local LLM** (GPT-2) for textual advice.  
+8. **GUI** (Tkinter) with fields: IP, Car, Tyres, Circuit, plus “Start/Stop/Analyze” and “Feedback” for LLM Q&A.
 
-### How to run
+### Usage
 1. `pip install -r requirements.txt`
 2. `python main.py`
-3. Enter the PlayStation IP (e.g. "192.168.1.10"), car name, tyres, circuit, then **Start** capturing at ~10Hz.
-4. **Stop** after some laps, then **Analyze** to train the ML model and get numeric advice. The LLM will provide textual commentary.
-5. Use "Feedback" to ask the LLM additional questions.
+3. Provide PlayStation IP, e.g. “192.168.1.10”.  
+4. Press **Start**: a byte is sent to port 33739, telemetry arrives on 33740.  
+5. **Stop** after enough laps, **Analyze** trains ML. LLM gives textual tips.  
+6. “Feedback” can ask the LLM more questions.
 
-### Potential TOS Violations
-**Warning**: Intercepting and decrypting GT7 packets may violate Sony/Polyphony Digital Terms of Service:
-- Reverse engineering or undocumented protocols
-- Unauthorized usage of in-game data
-Use at your own risk after reviewing the TOS.
+### ToS Warning
+Intercepting/decrypting GT7 packets may violate Sony/Polyphony Digital’s Terms of Service regarding reverse engineering and unauthorized use of game data. Use at your own risk.
