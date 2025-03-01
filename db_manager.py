@@ -5,6 +5,8 @@ import sqlite3
 def init_db(db_path):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
+
+    # 50+ campi in telemetria
     c.execute("""
     CREATE TABLE IF NOT EXISTS telemetry (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13,8 +15,8 @@ def init_db(db_path):
         package_id INTEGER,
         car_id INTEGER,
 
-        best_lap REAL,      -- secondi
-        last_lap REAL,      -- secondi
+        best_lap REAL,    
+        last_lap REAL,    
         current_lap INTEGER,
         total_laps INTEGER,
 
@@ -42,11 +44,11 @@ def init_db(db_path):
         position_y REAL,
         position_z REAL,
 
-        velocity_x REAL,   -- m/s
+        velocity_x REAL,       -- m/s
         velocity_y REAL,
         velocity_z REAL,
 
-        rotation_pitch REAL,  -- gradi
+        rotation_pitch REAL,   -- gradi
         rotation_yaw REAL,
         rotation_roll REAL,
 
@@ -71,10 +73,10 @@ def init_db(db_path):
         current_position INTEGER,
         total_positions INTEGER,
 
-        throttle REAL,  -- [0..100]%
+        throttle REAL,       -- [0..100]%
         rpm REAL,
         rpm_rev_warning REAL,
-        brake REAL,  -- [0..100]%
+        brake REAL,          -- [0..100]%
         boost REAL,
         rpm_rev_limiter REAL,
         estimated_top_speed REAL, -- m/s
@@ -128,8 +130,8 @@ def save_telemetry(conn, data_dict):
 
         data_dict["fuel_capacity"], data_dict["current_fuel"],
 
-        data_dict["car_speed"],     # km/h
-        data_dict["tyre_speed_fl"], # m/s
+        data_dict["car_speed"],     
+        data_dict["tyre_speed_fl"],
         data_dict["tyre_speed_fr"],
         data_dict["tyre_speed_rl"],
         data_dict["tyre_speed_rr"],
