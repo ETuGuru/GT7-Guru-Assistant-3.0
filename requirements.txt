@@ -1,0 +1,8 @@
+numpy
+sqlite3
+struct
+tk
+pycryptodome
+torch
+transformers
+tensorflow
