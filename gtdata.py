@@ -1,4 +1,5 @@
 # gtdata.py
+
 import struct
 from datetime import datetime
 
@@ -42,9 +43,9 @@ class GTData:
 
         # VELOCITA' (m/s -> km/h)
         car_speed_ms, = struct.unpack('f', ddata[0x4C:0x4C + 4])
-        self.car_speed = car_speed_ms * 3.6  # in km/h
+        self.car_speed = car_speed_ms * 3.6  # km/h
 
-        # Velocità ruote (m/s)
+        # Velocità ruote in m/s
         self.tyre_speed_fl, = struct.unpack('f', ddata[0xA4:0xA4 + 4])
         self.tyre_speed_fr, = struct.unpack('f', ddata[0xA8:0xA8 + 4])
         self.tyre_speed_rl, = struct.unpack('f', ddata[0xAC:0xAC + 4])
@@ -65,7 +66,7 @@ class GTData:
         self.rotation_yaw, = struct.unpack('f', ddata[0x20:0x20 + 4])
         self.rotation_roll, = struct.unpack('f', ddata[0x24:0x24 + 4])
 
-        # Vel angolare (gradi/s)
+        # Velocità angolare (gradi/s)
         self.angular_velocity_x, = struct.unpack('f', ddata[0x2C:0x2C + 4])
         self.angular_velocity_y, = struct.unpack('f', ddata[0x30:0x30 + 4])
         self.angular_velocity_z, = struct.unpack('f', ddata[0x34:0x34 + 4])
@@ -81,7 +82,7 @@ class GTData:
         # PRESSIONE
         self.oil_pressure, = struct.unpack('f', ddata[0x54:0x54 + 4])
 
-        # ALTEZZA da terra (m -> mm)
+        # ALTEZZA (m->mm)
         raw_rh, = struct.unpack('f', ddata[0x38:0x38 + 4])
         self.ride_height = raw_rh * 1000.0
 
@@ -95,7 +96,7 @@ class GTData:
         self.current_position, = struct.unpack('h', ddata[0x84:0x84 + 2])
         self.total_positions, = struct.unpack('h', ddata[0x86:0x86 + 2])
 
-        # Throttle/Brake [0..255] => [0..100]%
+        # Throttle e Brake [0..255] => [0..100]%
         thr_byte = struct.unpack('B', ddata[0x91:0x91 + 1])[0]
         self.throttle = thr_byte / 2.55
 
@@ -139,9 +140,9 @@ class GTData:
             "gear_7": self.gear_7,
             "gear_8": self.gear_8,
             "fuel_capacity": self.fuel_capacity,
-            "current_fuel": self.fuel_capacity,
-            "car_speed": self.car_speed,        # km/h
-            "tyre_speed_fl": self.tyre_speed_fl,# m/s
+            "current_fuel": self.current_fuel,
+            "car_speed": self.car_speed,  # km/h
+            "tyre_speed_fl": self.tyre_speed_fl,  # m/s
             "tyre_speed_fr": self.tyre_speed_fr,
             "tyre_speed_rl": self.tyre_speed_rl,
             "tyre_speed_rr": self.tyre_speed_rr,
