@@ -14,11 +14,10 @@ class GT7GuruGUI:
         self.root = root
         self.root.title("GT7 Guru Assistant 3.0")
 
-        # Inizializza DB
         self.conn = init_db(DB_PATH)
         self.listener = GT7TelemetryListener(self.conn)
 
-        # IP PS
+        # Campo IP
         self.lbl_ip = tk.Label(root, text="PlayStation IP:")
         self.entry_ip = tk.Entry(root, width=20)
         self.entry_ip.insert(0, "192.168.1.123")
@@ -52,7 +51,6 @@ class GT7GuruGUI:
         self.btn_stop.grid(row=4, column=1, padx=5, pady=5)
         self.btn_analyze.grid(row=4, column=2, padx=5, pady=5)
 
-        # Box testo output
         self.txt_output = scrolledtext.ScrolledText(root, width=80, height=15)
         self.txt_output.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
 
@@ -100,10 +98,9 @@ class GT7GuruGUI:
         rows = load_recent_telemetry(self.conn, limit=50)
         telemetry_batch = []
         for r in rows:
-            # Indici corrispondenti al DB
             tdict = {
-                "car_speed": r[20],  # km/h
-                "tyre_speed_fl": r[21],  # m/s
+                "car_speed": r[20],
+                "tyre_speed_fl": r[21],
                 "tyre_speed_fr": r[22],
                 "tyre_speed_rl": r[23],
                 "tyre_speed_rr": r[24],
