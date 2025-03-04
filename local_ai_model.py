@@ -4,7 +4,9 @@ import os
 import sqlite3
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
+from tensorflow.keras import Input, Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
 
 from config import DB_PATH, LOCAL_TF_MODEL_PATH, EPOCHS, BATCH_SIZE, LEARNING_RATE
 from db_manager import load_all_telemetry
@@ -12,12 +14,11 @@ from mechanics import extract_features
 
 try:
     tf.config.set_visible_devices([], 'GPU')
-except:
+except Exception as e:
     pass
 
 def row_to_dict(row):
     return {
-        # Indici come in db_manager
         "timestamp": row[1],
         "package_id": row[2],
         "car_id": row[3],
@@ -91,7 +92,6 @@ def create_dataset(rows):
     for r in rows:
         td = row_to_dict(r)
         feats = extract_features(td)
-
         x_vec = [
             feats["car_speed_kmh"],
             feats["avg_slip_ratio"],
@@ -103,18 +103,18 @@ def create_dataset(rows):
         best_lap_s = td["best_lap"] if td["best_lap"] else 0.0
         X_list.append(x_vec)
         Y_list.append(best_lap_s)
-
     X = np.array(X_list, dtype=np.float32)
     Y = np.array(Y_list, dtype=np.float32)
     return X, Y
 
 def build_model(input_dim):
-    model = keras.Sequential([
-        keras.layers.Dense(64, activation='relu', input_shape=(input_dim,)),
-        keras.layers.Dense(64, activation='relu'),
-        keras.layers.Dense(1)
+    model = Sequential([
+        Input(shape=(input_dim,)),
+        Dense(64, activation='relu'),
+        Dense(64, activation='relu'),
+        Dense(1)
     ])
-    opt = keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+    opt = Adam(learning_rate=LEARNING_RATE)
     model.compile(optimizer=opt, loss='mse')
     return model
 
@@ -128,17 +128,18 @@ def train_model():
     X, Y = create_dataset(rows)
     model = build_model(X.shape[1])
     print(f"[local_ai_model] Training su X={X.shape}, Y={Y.shape}")
-    model.fit(X, Y, epochs=5, batch_size=64, validation_split=0.1)
+    model.fit(X, Y, epochs=EPOCHS, batch_size=BATCH_SIZE, validation_split=0.1)
     os.makedirs(LOCAL_TF_MODEL_PATH, exist_ok=True)
-    model.save(os.path.join(LOCAL_TF_MODEL_PATH, "model.h5"))
-    print("[local_ai_model] Modello salvato.")
+    model_save_path = os.path.join(LOCAL_TF_MODEL_PATH, "model.keras")
+    model.save(model_save_path)
+    print("[local_ai_model] Modello salvato nel formato nativo Keras.")
     return model
 
 def load_model():
-    path = os.path.join(LOCAL_TF_MODEL_PATH, "model.h5")
+    path = os.path.join(LOCAL_TF_MODEL_PATH, "model.keras")
     if not os.path.exists(path):
         return None
-    return keras.models.load_model(path)
+    return tf.keras.models.load_model(path)
 
 def infer_advice_on_batch(telemetry_batch):
     model = load_model()

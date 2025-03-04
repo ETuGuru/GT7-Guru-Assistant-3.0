@@ -13,4 +13,5 @@ BATCH_SIZE = 64
 LEARNING_RATE = 0.001
 
 LOCAL_TF_MODEL_PATH = "local_tf_model"
-LOCAL_LLM_MODEL_NAME = "gpt2"
+# Imposta il modello GPT-J; nota che "EleutherAI/gpt-j-6B" è un modello molto grande
+LOCAL_LLM_MODEL_NAME = "EleutherAI/gpt-j-6B"
