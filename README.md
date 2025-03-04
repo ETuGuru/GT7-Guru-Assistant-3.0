@@ -1,4 +1,4 @@
-#Italiano
+# Italiano
 
 🏎️ GT7 Guru Assistant 3.0
 
