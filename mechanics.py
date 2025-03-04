@@ -19,7 +19,7 @@ def extract_features(telemetry_dict):
     fr_slip = calc_slip_ratio(fr_ms, car_speed_ms)
     rl_slip = calc_slip_ratio(rl_ms, car_speed_ms)
     rr_slip = calc_slip_ratio(rr_ms, car_speed_ms)
-    avg_slip = (abs(fl_slip)+abs(fr_slip)+abs(rl_slip)+abs(rr_slip))/4.0
+    avg_slip = (abs(fl_slip) + abs(fr_slip) + abs(rl_slip) + abs(rr_slip)) / 4.0
 
     throttle_pct = telemetry_dict.get("throttle", 0.0)
     brake_pct = telemetry_dict.get("brake", 0.0)
