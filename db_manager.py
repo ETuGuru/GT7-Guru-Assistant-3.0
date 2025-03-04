@@ -1,6 +1,13 @@
 # db_manager.py
 
 import sqlite3
+import json
+
+CONFIG_FILE = "config.json"
+def save_config(config):
+    """Salva la configurazione su file JSON."""
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f, indent=4)
 
 def init_db(db_path):
     conn = sqlite3.connect(db_path, check_same_thread=False)
