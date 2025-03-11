@@ -15,11 +15,10 @@ os.environ["HF_HOME"] = os.path.join(os.getcwd(), "huggingface_cache")
 CONFIG_FILE = "config.json"
 
 def load_config():
-    """Carica la configurazione di default, comprensiva di tutti i parametri di assetto."""
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r") as f:
             return json.load(f)
-    # Configurazione di default
+    # Configurazione di default con tutti i parametri di assetto
     return {
         "auto": "",
         "gomme": "",
@@ -57,7 +56,7 @@ def load_config():
         "diff_frenata_ant": "5", "diff_frenata_post": "5",
         "diff_frenata_ant_min": "", "diff_frenata_ant_max": "",
         "diff_frenata_post_min": "", "diff_frenata_post_max": "",
-        "diff_distrib": "50:50",  # es. "0:100", "5:95", "10:90"...
+        "diff_distrib": "50:50",  # Es. "0:100", "5:95", etc.
         # Aerodinamica
         "deportanza_ant": "50", "deportanza_post": "50",
         "deportanza_ant_min": "", "deportanza_ant_max": "",
@@ -67,10 +66,10 @@ def load_config():
         "ecu_reg_potenza_min": "", "ecu_reg_potenza_max": "",
         "zavorra": "0",
         "zavorra_min": "", "zavorra_max": "",
-        "pos_zavorra": "0",  # -50 anteriore, +50 posteriore
+        "pos_zavorra": "0",  # -50 anteriore, +50 posteriore, 0 centro
         "limitatore": "100",
         "limitatore_min": "", "limitatore_max": "",
-        "freni": "0",
+        "freni": "0",  # Bilanciamento Freni
         "freni_min": "", "freni_max": "",
         # Cambio
         "rapporti": "2.83,2.10,1.70,1.45,1.30,1.20,0.00,0.00",
@@ -81,39 +80,6 @@ def save_config_data(config):
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=4)
 
-# --- Database per i default di assetto (Car ID) ---
-def init_assetto_defaults_db(db_path):
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS assetto_defaults (
-        car_id TEXT PRIMARY KEY,
-        -- qui puoi definire le stesse colonne per parametri di default (se necessario)
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-    conn.commit()
-    return conn
-
-def load_car_defaults(conn, car_id):
-    c = conn.cursor()
-    # in questo esempio la tabella assetto_defaults è minima, da espandere se vuoi salvare i parametri
-    c.execute("SELECT * FROM assetto_defaults WHERE car_id = ?", (car_id,))
-    row = c.fetchone()
-    if row:
-        columns = [col[0] for col in c.description]
-        return dict(zip(columns, row))
-    else:
-        return None
-
-def save_car_defaults(conn, car_id, data):
-    c = conn.cursor()
-    # in questo esempio salviamo solo car_id, ma potresti aggiungere tutte le colonne
-    c.execute("""
-    INSERT OR REPLACE INTO assetto_defaults (car_id) VALUES (?)
-    """, (car_id,))
-    conn.commit()
-
 # --- Classe GUI ---
 class GT7GuruGUI:
     def __init__(self, root):
@@ -121,23 +87,18 @@ class GT7GuruGUI:
         self.root.title("GT7 Guru Assistant 3.0")
         self.config = load_config()
         self.conn = init_db(DB_PATH)
-        self.defaults_conn = init_assetto_defaults_db(DB_PATH)
         self.listener = GT7TelemetryListener(self.conn)
         self.llm = None
         self.llm_loaded = False
         self.create_widgets()
-        self.update_carid_status()
-
+        
     def create_widgets(self):
-        # Notebook
         notebook = ttk.Notebook(self.root)
         notebook.grid(row=0, column=0, columnspan=7, sticky="nsew")
 
-        # 1. Tab Dati contestuali
+        # Tab 1: Dati contestuali
         self.tab_context = ttk.Frame(notebook)
         notebook.add(self.tab_context, text="Dati contestuali")
-
-        # Auto, gomme, circuito
         ttk.Label(self.tab_context, text="Auto (nome+anno):").grid(row=0, column=0, sticky="e", padx=5, pady=2)
         self.entry_car = ttk.Entry(self.tab_context, width=30)
         self.entry_car.insert(0, self.config.get("auto", ""))
@@ -150,8 +111,7 @@ class GT7GuruGUI:
         self.entry_circuit = ttk.Entry(self.tab_context, width=30)
         self.entry_circuit.insert(0, self.config.get("circuito", ""))
         self.entry_circuit.grid(row=1, column=1, padx=5, pady=2)
-
-        # Car ID + indicator + pulsanti
+        # Car ID e pulsanti
         ttk.Label(self.tab_context, text="Car ID:").grid(row=2, column=0, sticky="e", padx=5, pady=2)
         self.entry_car_id = ttk.Entry(self.tab_context, width=20)
         self.entry_car_id.grid(row=2, column=1, padx=5, pady=2)
@@ -162,17 +122,14 @@ class GT7GuruGUI:
         self.btn_save_carid = ttk.Button(self.tab_context, text="Save Car_ID", command=self.save_car_defaults)
         self.btn_save_carid.grid(row=2, column=4, padx=5, pady=2)
 
-        # 2. Tab Parametri Assetto
+        # Tab 2: Parametri Assetto
         self.tab_params = ttk.Frame(notebook)
         notebook.add(self.tab_params, text="Parametri Assetto")
-
-        # Header: 7 colonne
         headers = ["Parametro", "Ant.", "Post.", "Ant. min", "Ant. max", "Post. min", "Post. max"]
         for idx, text in enumerate(headers):
             ttk.Label(self.tab_params, text=text, font=("TkDefaultFont", 10, "bold")).grid(row=0, column=idx, padx=5, pady=2)
-
         row = 1
-        # Altezza dal suolo
+        # Altezza suolo (mm)
         ttk.Label(self.tab_params, text="Altezza suolo (mm)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_altezza_ant = ttk.Entry(self.tab_params, width=10)
         self.entry_altezza_ant.insert(0, self.config.get("altezza_ant", "100"))
@@ -216,7 +173,7 @@ class GT7GuruGUI:
         self.entry_barre_post_max.grid(row=row, column=6, padx=5, pady=2)
         row += 1
 
-        # Ammortizzazione Compressione
+        # Ammortizzazione Compressione (%)
         ttk.Label(self.tab_params, text="Ammort. Compressione (%)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_comp_ant = ttk.Entry(self.tab_params, width=10)
         self.entry_comp_ant.insert(0, self.config.get("ammort_compressione_ant", "50"))
@@ -238,7 +195,7 @@ class GT7GuruGUI:
         self.entry_comp_post_max.grid(row=row, column=6, padx=5, pady=2)
         row += 1
 
-        # Ammortizzazione Estensione
+        # Ammortizzazione Estensione (%)
         ttk.Label(self.tab_params, text="Ammort. Estensione (%)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_est_ant = ttk.Entry(self.tab_params, width=10)
         self.entry_est_ant.insert(0, self.config.get("ammort_estensione_ant", "50"))
@@ -260,7 +217,7 @@ class GT7GuruGUI:
         self.entry_est_post_max.grid(row=row, column=6, padx=5, pady=2)
         row += 1
 
-        # Frequenza Naturale
+        # Frequenza Naturale (Hz)
         ttk.Label(self.tab_params, text="Frequenza Nat. (Hz)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_freq_ant = ttk.Entry(self.tab_params, width=10)
         self.entry_freq_ant.insert(0, self.config.get("frequenza_ant", "10"))
@@ -282,7 +239,7 @@ class GT7GuruGUI:
         self.entry_freq_post_max.grid(row=row, column=6, padx=5, pady=2)
         row += 1
 
-        # Campanatura
+        # Campanatura (°)
         ttk.Label(self.tab_params, text="Campanatura (°)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_camp_ant = ttk.Entry(self.tab_params, width=10)
         self.entry_camp_ant.insert(0, self.config.get("campanatura_ant", "-2"))
@@ -304,7 +261,7 @@ class GT7GuruGUI:
         self.entry_camp_post_max.grid(row=row, column=6, padx=5, pady=2)
         row += 1
 
-        # Angolo Convergenza
+        # Angolo Convergenza (°) – inserire direttamente il valore con segno
         ttk.Label(self.tab_params, text="Angolo Convergenza (°)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_conv_ant = ttk.Entry(self.tab_params, width=10)
         self.entry_conv_ant.insert(0, self.config.get("conv_ant", "0"))
@@ -324,7 +281,7 @@ class GT7GuruGUI:
         self.entry_conv_post_max = ttk.Entry(self.tab_params, width=5)
         self.entry_conv_post_max.insert(0, self.config.get("conv_post_max", ""))
         self.entry_conv_post_max.grid(row=row, column=6, padx=5, pady=2)
-        ttk.Label(self.tab_params, text="(Usa '+' convergente, '-' divergente)").grid(row=row, column=7, padx=5, pady=2)
+        ttk.Label(self.tab_params, text="(Usa '+' per convergente, '-' per divergente)").grid(row=row, column=7, padx=5, pady=2)
         row += 1
 
         # Differenziale - Coppia Iniziale
@@ -393,18 +350,17 @@ class GT7GuruGUI:
         self.entry_diff_frenata_post_max.grid(row=row, column=6, padx=5, pady=2)
         row += 1
 
-        # Distribuzione di Coppia
+        # Differenziale - Distribuzione di Coppia
         ttk.Label(self.tab_params, text="Diff. Distribuzione").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_diff_distrib = ttk.Entry(self.tab_params, width=10)
         self.entry_diff_distrib.insert(0, self.config.get("diff_distrib", "50:50"))
         self.entry_diff_distrib.grid(row=row, column=1, padx=5, pady=2)
-        # Lasciamo in bianco le altre colonne
         for col in range(2, 7):
             ttk.Entry(self.tab_params, width=5).grid(row=row, column=col, padx=5, pady=2)
         row += 1
 
         # Deportanza
-        ttk.Label(self.tab_params, text="Deportanza (livello)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        ttk.Label(self.tab_params, text="Deportanza").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_deportanza_ant = ttk.Entry(self.tab_params, width=10)
         self.entry_deportanza_ant.insert(0, self.config.get("deportanza_ant", "50"))
         self.entry_deportanza_ant.grid(row=row, column=1, padx=5, pady=2)
@@ -425,7 +381,7 @@ class GT7GuruGUI:
         self.entry_deportanza_post_max.grid(row=row, column=6, padx=5, pady=2)
         row += 1
 
-        # ECU Reg. Potenza
+        # ECU Regolazione Potenza
         ttk.Label(self.tab_params, text="ECU Reg. Potenza (%)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_ecu = ttk.Entry(self.tab_params, width=10)
         self.entry_ecu.insert(0, self.config.get("ecu_reg_potenza", "100"))
@@ -455,17 +411,15 @@ class GT7GuruGUI:
             ttk.Entry(self.tab_params, width=5).grid(row=row, column=col, padx=5, pady=2)
         row += 1
 
-        # Posizionamento Zavorra
+        # Posizionamento Zavorra (valore unico + didascalia)
         ttk.Label(self.tab_params, text="Pos. Zavorra").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_pos_zavorra = ttk.Entry(self.tab_params, width=10)
         self.entry_pos_zavorra.insert(0, self.config.get("pos_zavorra", "0"))
         self.entry_pos_zavorra.grid(row=row, column=1, padx=5, pady=2)
-        ttk.Label(self.tab_params, text="(-50 anteriore, 0 centro, +50 posteriore)").grid(row=row, column=2, columnspan=3, padx=5, pady=2)
-        for col in range(5, 7):
-            ttk.Entry(self.tab_params, width=5).grid(row=row, column=col, padx=5, pady=2)
+        ttk.Label(self.tab_params, text="(-50 anteriore, 0 centro, +50 posteriore)").grid(row=row, column=2, columnspan=5, padx=5, pady=2)
         row += 1
 
-        # Limitatore di potenza
+        # Limitatore di Potenza
         ttk.Label(self.tab_params, text="Limitatore (%)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_limitatore = ttk.Entry(self.tab_params, width=10)
         self.entry_limitatore.insert(0, self.config.get("limitatore", "100"))
@@ -480,13 +434,12 @@ class GT7GuruGUI:
             ttk.Entry(self.tab_params, width=5).grid(row=row, column=col, padx=5, pady=2)
         row += 1
 
-        # Bilanciamento Freni
-        ttk.Label(self.tab_params, text="Bilanc. Freni").grid(row=row, column=0, sticky="e", padx=5, pady=2)
+        # Bilanciamento Freni (singolo valore)
+        ttk.Label(self.tab_params, text="Bilanc. Freni (-5..+5)").grid(row=row, column=0, sticky="e", padx=5, pady=2)
         self.entry_freni = ttk.Entry(self.tab_params, width=10)
         self.entry_freni.insert(0, self.config.get("freni", "0"))
         self.entry_freni.grid(row=row, column=1, padx=5, pady=2)
-        ttk.Label(self.tab_params, text="(-5 ... +5)").grid(row=row, column=2, columnspan=2, padx=5, pady=2)
-        for col in range(4, 7):
+        for col in range(2, 7):
             ttk.Entry(self.tab_params, width=5).grid(row=row, column=col, padx=5, pady=2)
         row += 1
 
@@ -509,7 +462,7 @@ class GT7GuruGUI:
         self.entry_rapporto_finale.insert(0, self.config.get("rapporto_finale", "4.00"))
         self.entry_rapporto_finale.grid(row=9, column=1, padx=5, pady=5)
 
-        # Frame Suggerimenti AI
+        # Tab Suggerimenti AI
         self.frame_suggest = ttk.LabelFrame(self.root, text="Suggerimenti AI")
         self.frame_suggest.grid(row=3, column=0, columnspan=7, padx=5, pady=5, sticky="w")
         self.txt_suggest = scrolledtext.ScrolledText(self.frame_suggest, width=100, height=8)
@@ -538,7 +491,6 @@ class GT7GuruGUI:
         self.btn_feedback.grid(row=6, column=2, padx=5, pady=2)
 
     def update_carid_status(self):
-        """Aggiorna l'indicatore di stato per Car ID (verde se dati trovati, rosso se non esistono)."""
         car_id = self.entry_car_id.get().strip()
         if car_id:
             defaults = load_car_defaults(self.defaults_conn, car_id)
@@ -554,32 +506,43 @@ class GT7GuruGUI:
         self.root.after(3000, self.update_carid_status)
 
     def load_car_defaults(self):
-        """Carica i parametri di default dal database, associati al Car ID inserito."""
         car_id = self.entry_car_id.get().strip()
         if not car_id:
             messagebox.showwarning("Car ID", "Inserisci un Car ID valido.")
             return
         defaults = load_car_defaults(self.defaults_conn, car_id)
         if defaults:
-            # In questo esempio salviamo/leggiamo solo car_id, ma potresti aggiungere tutte le colonne
-            messagebox.showinfo("Load Car_ID", f"Dati caricati per Car ID {car_id} (se hai memorizzato parametri).")
+            # Aggiorna i campi della GUI se implementi il salvataggio completo
+            messagebox.showinfo("Load Car_ID", f"Dati caricati per Car ID {car_id}.")
         else:
-            messagebox.showwarning("Load Car_ID", f"Nessun dato trovato per il Car ID {car_id}")
+            messagebox.showwarning("Load Car_ID", f"Nessun dato trovato per il Car ID {car_id}.")
 
     def save_car_defaults(self):
-        """Salva i parametri di default nel database, associati al Car ID."""
         car_id = self.entry_car_id.get().strip()
         if not car_id:
             messagebox.showwarning("Car ID", "Inserisci un Car ID valido per salvare i dati.")
             return
-        # In questo esempio, salviamo solo il car_id, ma puoi espandere il dict con tutti i parametri
-        data = {}
+        # In questo esempio salviamo solo il Car ID; per un salvataggio completo, raccogli anche i parametri.
+        data = {
+            "altezza_ant": self.entry_altezza_ant.get().strip(),
+            "altezza_post": self.entry_altezza_post.get().strip(),
+            "altezza_ant_min": self.entry_altezza_ant_min.get().strip(),
+            "altezza_ant_max": self.entry_altezza_ant_max.get().strip(),
+            "altezza_post_min": self.entry_altezza_post_min.get().strip(),
+            "altezza_post_max": self.entry_altezza_post_max.get().strip(),
+            "barre_ant": self.entry_barre_ant.get().strip(),
+            "barre_post": self.entry_barre_post.get().strip(),
+            "barre_ant_min": self.entry_barre_ant_min.get().strip(),
+            "barre_ant_max": self.entry_barre_ant_max.get().strip(),
+            "barre_post_min": self.entry_barre_post_min.get().strip(),
+            "barre_post_max": self.entry_barre_post_max.get().strip()
+            # Aggiungi gli altri parametri se necessario
+        }
         save_car_defaults(self.defaults_conn, car_id, data)
-        messagebox.showinfo("Save Car_ID", f"Dati salvati per il Car ID {car_id}")
+        messagebox.showinfo("Save Car_ID", f"Dati salvati per il Car ID {car_id}.")
         self.update_carid_status()
 
     def on_analyze(self):
-        """Esegue il training del modello ML locale, carica telemetria recente, e genera un consiglio dall'LLM."""
         self.listener.stop_listener()
         self.txt_output.insert(tk.END, "[INFO] Training modello ML...\n")
         model = train_model()
@@ -612,23 +575,23 @@ class GT7GuruGUI:
             self.llm = FalconLLM()
             self.llm_loaded = True
 
-        # Esempio di come costruire il contesto da passare all'LLM
-        params = f"""(Riassunto parametri dall'interfaccia: Altezza Ant={self.entry_altezza_ant.get()}, 
-Barre Ant={self.entry_barre_ant.get()}, ... ecc.)"""
-        context = f"{numeric_advice}\n{params}\n" \
-                  f"Auto: {telemetry_batch[-1].get('car_model', 'Sconosciuta')}, " \
-                  f"Gomme: {telemetry_batch[-1].get('tyre_type', 'Sconosciute')}, " \
-                  f"Circuito: {telemetry_batch[-1].get('circuit_name', 'Sconosciuto')}"
-        suggestion = self.llm.generate_response(context)
+        # Costruisco i dati di configurazione e telemetria per il modello LLM
+        config_data = {
+            "modello_veicolo": self.entry_car.get().strip(),
+            "nome_circuito": self.entry_circuit.get().strip(),
+            "tipo_gomme": self.entry_tyre.get().strip()
+        }
+        telemetry_data = telemetry_batch[-1]  # prendo l'ultimo dato raccolto
+
+        suggestion = self.llm.generate_response(config_data, telemetry_data)
         self.txt_suggest.delete(1.0, tk.END)
-        self.txt_suggest.insert(tk.END, suggestion)
+        self.txt_suggest.insert(tk.END, str(suggestion))
 
     def on_reset_db(self):
         clear_telemetry(self.conn)
         self.txt_output.insert(tk.END, "[INFO] Database resettato.\n")
 
     def on_save_config(self):
-        """Salva i parametri correnti nel file config.json."""
         self.config["auto"] = self.entry_car.get().strip()
         self.config["gomme"] = self.entry_tyre.get().strip()
         self.config["circuito"] = self.entry_circuit.get().strip()
@@ -639,35 +602,34 @@ Barre Ant={self.entry_barre_ant.get()}, ... ecc.)"""
         self.config["altezza_ant_max"] = self.entry_altezza_ant_max.get().strip()
         self.config["altezza_post_min"] = self.entry_altezza_post_min.get().strip()
         self.config["altezza_post_max"] = self.entry_altezza_post_max.get().strip()
-
+        # Barre Antirollio
         self.config["barre_ant"] = self.entry_barre_ant.get().strip()
         self.config["barre_post"] = self.entry_barre_post.get().strip()
         self.config["barre_ant_min"] = self.entry_barre_ant_min.get().strip()
         self.config["barre_ant_max"] = self.entry_barre_ant_max.get().strip()
         self.config["barre_post_min"] = self.entry_barre_post_min.get().strip()
         self.config["barre_post_max"] = self.entry_barre_post_max.get().strip()
-
+        # Ammortizzazione Compressione
         self.config["ammort_compressione_ant"] = self.entry_comp_ant.get().strip()
         self.config["ammort_compressione_post"] = self.entry_comp_post.get().strip()
         self.config["ammort_compressione_ant_min"] = self.entry_comp_ant_min.get().strip()
         self.config["ammort_compressione_ant_max"] = self.entry_comp_ant_max.get().strip()
         self.config["ammort_compressione_post_min"] = self.entry_comp_post_min.get().strip()
         self.config["ammort_compressione_post_max"] = self.entry_comp_post_max.get().strip()
-
+        # Ammortizzazione Estensione
         self.config["ammort_estensione_ant"] = self.entry_est_ant.get().strip()
         self.config["ammort_estensione_post"] = self.entry_est_post.get().strip()
         self.config["ammort_estensione_ant_min"] = self.entry_est_ant_min.get().strip()
         self.config["ammort_estensione_ant_max"] = self.entry_est_ant_max.get().strip()
         self.config["ammort_estensione_post_min"] = self.entry_est_post_min.get().strip()
         self.config["ammort_estensione_post_max"] = self.entry_est_post_max.get().strip()
-
+        # Frequenza Naturale
         self.config["frequenza_ant"] = self.entry_freq_ant.get().strip()
         self.config["frequenza_post"] = self.entry_freq_post.get().strip()
         self.config["frequenza_ant_min"] = self.entry_freq_ant_min.get().strip()
         self.config["frequenza_ant_max"] = self.entry_freq_ant_max.get().strip()
         self.config["frequenza_post_min"] = self.entry_freq_post_min.get().strip()
         self.config["frequenza_post_max"] = self.entry_freq_post_max.get().strip()
-
         # Geometria
         self.config["campanatura_ant"] = self.entry_camp_ant.get().strip()
         self.config["campanatura_post"] = self.entry_camp_post.get().strip()
@@ -675,14 +637,12 @@ Barre Ant={self.entry_barre_ant.get()}, ... ecc.)"""
         self.config["campanatura_ant_max"] = self.entry_camp_ant_max.get().strip()
         self.config["campanatura_post_min"] = self.entry_camp_post_min.get().strip()
         self.config["campanatura_post_max"] = self.entry_camp_post_max.get().strip()
-
         self.config["conv_ant"] = self.entry_conv_ant.get().strip()
         self.config["conv_post"] = self.entry_conv_post.get().strip()
         self.config["conv_ant_min"] = self.entry_conv_ant_min.get().strip()
         self.config["conv_ant_max"] = self.entry_conv_ant_max.get().strip()
         self.config["conv_post_min"] = self.entry_conv_post_min.get().strip()
         self.config["conv_post_max"] = self.entry_conv_post_max.get().strip()
-
         # Differenziale
         self.config["diff_coppia_ant"] = self.entry_diff_coppia_ant.get().strip()
         self.config["diff_coppia_post"] = self.entry_diff_coppia_post.get().strip()
@@ -690,23 +650,15 @@ Barre Ant={self.entry_barre_ant.get()}, ... ecc.)"""
         self.config["diff_coppia_ant_max"] = self.entry_diff_coppia_ant_max.get().strip()
         self.config["diff_coppia_post_min"] = self.entry_diff_coppia_post_min.get().strip()
         self.config["diff_coppia_post_max"] = self.entry_diff_coppia_post_max.get().strip()
-
         self.config["diff_acc_ant"] = self.entry_diff_acc_ant.get().strip()
         self.config["diff_acc_post"] = self.entry_diff_acc_post.get().strip()
         self.config["diff_acc_ant_min"] = self.entry_diff_acc_ant_min.get().strip()
-        self.config["diff_acc_ant_max"] = self.entry_diff_acc_ant_max.get().strip()
-        self.config["diff_acc_post_min"] = self.entry_diff_acc_post_min.get().strip()
         self.config["diff_acc_post_max"] = self.entry_diff_acc_post_max.get().strip()
-
         self.config["diff_frenata_ant"] = self.entry_diff_frenata_ant.get().strip()
         self.config["diff_frenata_post"] = self.entry_diff_frenata_post.get().strip()
         self.config["diff_frenata_ant_min"] = self.entry_diff_frenata_ant_min.get().strip()
-        self.config["diff_frenata_ant_max"] = self.entry_diff_frenata_ant_max.get().strip()
-        self.config["diff_frenata_post_min"] = self.entry_diff_frenata_post_min.get().strip()
         self.config["diff_frenata_post_max"] = self.entry_diff_frenata_post_max.get().strip()
-
         self.config["diff_distrib"] = self.entry_diff_distrib.get().strip()
-
         # Aerodinamica
         self.config["deportanza_ant"] = self.entry_deportanza_ant.get().strip()
         self.config["deportanza_post"] = self.entry_deportanza_post.get().strip()
@@ -714,20 +666,18 @@ Barre Ant={self.entry_barre_ant.get()}, ... ecc.)"""
         self.config["deportanza_ant_max"] = self.entry_deportanza_ant_max.get().strip()
         self.config["deportanza_post_min"] = self.entry_deportanza_post_min.get().strip()
         self.config["deportanza_post_max"] = self.entry_deportanza_post_max.get().strip()
-
         # Prestazioni
         self.config["ecu_reg_potenza"] = self.entry_ecu.get().strip()
-        self.config["ecu_reg_potenza_min"] = self.entry_ecu_min.get().strip()
-        self.config["ecu_reg_potenza_max"] = self.entry_ecu_max.get().strip()
+        self.config["ecu_reg_potenza_min"] = self.entry_ecu_min.get().strip() if hasattr(self, "entry_ecu_min") else ""
+        self.config["ecu_reg_potenza_max"] = self.entry_ecu_max.get().strip() if hasattr(self, "entry_ecu_max") else ""
         self.config["zavorra"] = self.entry_zavorra.get().strip()
-        self.config["zavorra_min"] = self.entry_zavorra_min.get().strip()
-        self.config["zavorra_max"] = self.entry_zavorra_max.get().strip()
+        self.config["zavorra_min"] = self.entry_zavorra_min.get().strip() if hasattr(self, "entry_zavorra_min") else ""
+        self.config["zavorra_max"] = self.entry_zavorra_max.get().strip() if hasattr(self, "entry_zavorra_max") else ""
         self.config["pos_zavorra"] = self.entry_pos_zavorra.get().strip()
         self.config["limitatore"] = self.entry_limitatore.get().strip()
-        self.config["limitatore_min"] = self.entry_limitatore_min.get().strip()
-        self.config["limitatore_max"] = self.entry_limitatore_max.get().strip()
+        self.config["limitatore_min"] = self.entry_limitatore_min.get().strip() if hasattr(self, "entry_limitatore_min") else ""
+        self.config["limitatore_max"] = self.entry_limitatore_max.get().strip() if hasattr(self, "entry_limitatore_max") else ""
         self.config["freni"] = self.entry_freni.get().strip()
-
         # Cambio
         ratio_list = []
         for entry in self.entry_rapporti:
@@ -746,7 +696,15 @@ Barre Ant={self.entry_barre_ant.get()}, ... ecc.)"""
         if not self.llm_loaded or not self.llm:
             self.txt_output.insert(tk.END, "[WARN] LLM non caricato.\n")
             return
-        resp = self.llm.generate_response(fb)
+        # Costruisci i dati di configurazione anche per il feedback
+        config_data = {
+            "modello_veicolo": self.entry_car.get().strip(),
+            "nome_circuito": self.entry_circuit.get().strip(),
+            "tipo_gomme": self.entry_tyre.get().strip()
+        }
+        # Per il feedback, usiamo il testo inserito come "dati di telemetria"
+        telemetry_data = fb
+        resp = self.llm.generate_response(config_data, telemetry_data)
         self.txt_output.insert(tk.END, f"[LLM] {resp}\n")
 
     def on_start(self):
