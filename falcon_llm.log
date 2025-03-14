@@ -1,0 +1,112 @@
+2025-03-14 00:22:57,023 - falcon_llm - INFO - Inizializzazione FalconLLM...
+2025-03-14 00:22:57,023 - falcon_llm - DEBUG - Python Version: 3.11.6 (tags/v3.11.6:8b6ee5b, Oct  2 2023, 14:57:12) [MSC v.1935 64 bit (AMD64)]
+2025-03-14 00:22:57,023 - falcon_llm - DEBUG - Working Directory: C:\Users\North\GT7-Guru-Assistant-3.0
+2025-03-14 00:22:57,024 - falcon_llm - DEBUG - CUDA Available: False
+2025-03-14 00:25:15,798 - falcon_llm - INFO - Inizializzazione FalconLLM...
+2025-03-14 00:25:15,798 - falcon_llm - DEBUG - Python Version: 3.11.6 (tags/v3.11.6:8b6ee5b, Oct  2 2023, 14:57:12) [MSC v.1935 64 bit (AMD64)]
+2025-03-14 00:25:15,798 - falcon_llm - DEBUG - Working Directory: C:\Users\North\GT7-Guru-Assistant-3.0
+2025-03-14 00:25:15,799 - falcon_llm - DEBUG - CUDA Available: False
+2025-03-14 00:25:15,799 - falcon_llm - INFO - Using CUDA: False
+2025-03-14 00:25:15,799 - falcon_llm - INFO - Setting up CPU-only mode (no 4-bit quantization)
+2025-03-14 00:25:15,799 - falcon_llm - DEBUG - Attempting to load tokenizer from tiiuae/falcon-7b-instruct
+2025-03-14 00:25:15,800 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2025-03-14 00:25:16,200 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2025-03-14 00:25:16,302 - falcon_llm - INFO - Tokenizer caricato
+2025-03-14 00:25:16,302 - falcon_llm - DEBUG - Tokenizer config: {'add_prefix_space': False, 'eos_token': AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), 'model_input_names': ['input_ids', 'attention_mask'], 'model_max_length': 2048, 'name_or_path': 'tiiuae/falcon-7b-instruct', 'special_tokens_map_file': None, 'chat_template': "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% else %}{% set loop_messages = messages %}{% set system_message = '' %}{% endif %}{% for message in loop_messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if loop.index0 == 0 %}{{ system_message.strip() }}{% endif %}{% if message['role'] == 'user' %}{{ '\n\nUser: ' + message['content'].strip().replace('\r\n', '\n').replace('\n\n', '\n') }}{% elif message['role'] == 'assistant' %}{{ '\n\nAssistant: ' + message['content'].strip().replace('\r\n', '\n').replace('\n\n', '\n') }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ '\n\nAssistant:' }}{% endif %}", 'vocab_file': None, 'additional_special_tokens': ['>>TITLE<<', '>>ABSTRACT<<', '>>INTRODUCTION<<', '>>SUMMARY<<', '>>COMMENT<<', '>>ANSWER<<', '>>QUESTION<<', '>>DOMAIN<<', '>>PREFIX<<', '>>SUFFIX<<', '>>MIDDLE<<']}
+2025-03-14 00:25:16,302 - falcon_llm - DEBUG - Memory status before loading model:
+2025-03-14 00:25:16,302 - falcon_llm - DEBUG - Attempting to load model from tiiuae/falcon-7b-instruct in CPU-only mode
+2025-03-14 00:25:16,302 - falcon_llm - DEBUG - Device map: cpu, Trust remote code: True
+2025-03-14 00:25:16,693 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/config.json HTTP/1.1" 200 0
+2025-03-14 00:25:16,825 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/configuration_falcon.py HTTP/1.1" 200 0
+2025-03-14 00:25:16,828 - transformers_modules.tiiuae.falcon-7b-instruct.8782b5c5d8c9290412416618f36a133653e85285.configuration_falcon - WARNING - 
+WARNING: You are currently loading Falcon using legacy code contained in the model repository. Falcon has now been fully ported into the Hugging Face transformers library. For the most up-to-date and high-performance version of the Falcon model code, please update to the latest version of transformers and then load the model without the trust_remote_code=True argument.
+
+2025-03-14 00:25:16,985 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/modeling_falcon.py HTTP/1.1" 200 0
+2025-03-14 00:25:17,876 - tensorflow - DEBUG - Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+2025-03-14 00:25:17,999 - h5py._conv - DEBUG - Creating converter from 7 to 5
+2025-03-14 00:25:17,999 - h5py._conv - DEBUG - Creating converter from 5 to 7
+2025-03-14 00:25:17,999 - h5py._conv - DEBUG - Creating converter from 7 to 5
+2025-03-14 00:25:17,999 - h5py._conv - DEBUG - Creating converter from 5 to 7
+2025-03-14 00:25:18,494 - matplotlib - DEBUG - matplotlib data path: C:\Users\North\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+2025-03-14 00:25:18,499 - matplotlib - DEBUG - CONFIGDIR=C:\Users\North\.matplotlib
+2025-03-14 00:25:18,500 - matplotlib - DEBUG - interactive is False
+2025-03-14 00:25:18,500 - matplotlib - DEBUG - platform is win32
+2025-03-14 00:25:18,532 - matplotlib - DEBUG - CACHEDIR=C:\Users\North\.matplotlib
+2025-03-14 00:25:18,543 - matplotlib.font_manager - DEBUG - Using fontManager instance from C:\Users\North\.matplotlib\fontlist-v390.json
+2025-03-14 00:25:39,601 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/generation_config.json HTTP/1.1" 200 0
+2025-03-14 00:25:39,612 - falcon_llm - INFO - Modello caricato con successo
+2025-03-14 00:25:39,612 - falcon_llm - DEBUG - Model loaded to device: cpu
+2025-03-14 00:25:39,612 - falcon_llm - DEBUG - Model dtype: torch.float32
+2025-03-14 00:42:29,934 - falcon_llm - INFO - Inizializzazione FalconLLM...
+2025-03-14 00:42:29,934 - falcon_llm - DEBUG - Python Version: 3.11.6 (tags/v3.11.6:8b6ee5b, Oct  2 2023, 14:57:12) [MSC v.1935 64 bit (AMD64)]
+2025-03-14 00:42:29,934 - falcon_llm - DEBUG - Working Directory: C:\Users\North\GT7-Guru-Assistant-3.0
+2025-03-14 00:42:29,953 - falcon_llm - DEBUG - CUDA Available: True
+2025-03-14 00:42:29,954 - falcon_llm - DEBUG - CUDA Version: 12.1
+2025-03-14 00:42:29,955 - falcon_llm - DEBUG - GPU Device: NVIDIA GeForce GTX 1050 Ti
+2025-03-14 00:42:29,955 - falcon_llm - DEBUG - GPU Memory: 4.29 GB
+2025-03-14 00:42:29,955 - falcon_llm - DEBUG - Current Memory Usage: 0.00 GB
+2025-03-14 00:42:29,955 - falcon_llm - INFO - Using CUDA: True
+2025-03-14 00:42:29,956 - falcon_llm - INFO - Setting up 4-bit quantization for CUDA
+2025-03-14 00:42:29,956 - falcon_llm - DEBUG - Attempting to load tokenizer from tiiuae/falcon-7b-instruct
+2025-03-14 00:42:29,957 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2025-03-14 00:42:30,354 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2025-03-14 00:42:30,464 - falcon_llm - INFO - Tokenizer caricato
+2025-03-14 00:42:30,464 - falcon_llm - DEBUG - Tokenizer config: {'add_prefix_space': False, 'eos_token': AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), 'model_input_names': ['input_ids', 'attention_mask'], 'model_max_length': 2048, 'name_or_path': 'tiiuae/falcon-7b-instruct', 'special_tokens_map_file': None, 'chat_template': "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% else %}{% set loop_messages = messages %}{% set system_message = '' %}{% endif %}{% for message in loop_messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if loop.index0 == 0 %}{{ system_message.strip() }}{% endif %}{% if message['role'] == 'user' %}{{ '\n\nUser: ' + message['content'].strip().replace('\r\n', '\n').replace('\n\n', '\n') }}{% elif message['role'] == 'assistant' %}{{ '\n\nAssistant: ' + message['content'].strip().replace('\r\n', '\n').replace('\n\n', '\n') }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ '\n\nAssistant:' }}{% endif %}", 'vocab_file': None, 'additional_special_tokens': ['>>TITLE<<', '>>ABSTRACT<<', '>>INTRODUCTION<<', '>>SUMMARY<<', '>>COMMENT<<', '>>ANSWER<<', '>>QUESTION<<', '>>DOMAIN<<', '>>PREFIX<<', '>>SUFFIX<<', '>>MIDDLE<<']}
+2025-03-14 00:42:30,464 - falcon_llm - DEBUG - Memory status before loading model:
+2025-03-14 00:42:30,464 - falcon_llm - DEBUG - CUDA Memory Allocated: 0.00 GB
+2025-03-14 00:42:30,465 - falcon_llm - DEBUG - CUDA Memory Reserved: 0.00 GB
+2025-03-14 00:42:30,465 - falcon_llm - DEBUG - Attempting to load model from tiiuae/falcon-7b-instruct with 4-bit quantization
+2025-03-14 00:42:30,465 - falcon_llm - DEBUG - Quantization config: BitsAndBytesConfig {
+  "_load_in_4bit": true,
+  "_load_in_8bit": false,
+  "bnb_4bit_compute_dtype": "float16",
+  "bnb_4bit_quant_storage": "uint8",
+  "bnb_4bit_quant_type": "nf4",
+  "bnb_4bit_use_double_quant": true,
+  "llm_int8_enable_fp32_cpu_offload": false,
+  "llm_int8_has_fp16_weight": false,
+  "llm_int8_skip_modules": null,
+  "llm_int8_threshold": 6.0,
+  "load_in_4bit": true,
+  "load_in_8bit": false,
+  "quant_method": "bitsandbytes"
+}
+
+2025-03-14 00:42:30,465 - falcon_llm - DEBUG - Device map: auto, Trust remote code: True
+2025-03-14 00:42:30,528 - falcon_llm - DEBUG - Cleared CUDA cache. Available: 0.00 GB used
+2025-03-14 00:42:30,673 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/config.json HTTP/1.1" 200 0
+2025-03-14 00:42:30,801 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/configuration_falcon.py HTTP/1.1" 200 0
+2025-03-14 00:42:30,807 - transformers_modules.tiiuae.falcon-7b-instruct.8782b5c5d8c9290412416618f36a133653e85285.configuration_falcon - WARNING - 
+WARNING: You are currently loading Falcon using legacy code contained in the model repository. Falcon has now been fully ported into the Hugging Face transformers library. For the most up-to-date and high-performance version of the Falcon model code, please update to the latest version of transformers and then load the model without the trust_remote_code=True argument.
+
+2025-03-14 00:42:30,990 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /tiiuae/falcon-7b-instruct/resolve/main/modeling_falcon.py HTTP/1.1" 200 0
+2025-03-14 00:42:32,591 - tensorflow - DEBUG - Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+2025-03-14 00:42:32,971 - h5py._conv - DEBUG - Creating converter from 7 to 5
+2025-03-14 00:42:32,971 - h5py._conv - DEBUG - Creating converter from 5 to 7
+2025-03-14 00:42:32,971 - h5py._conv - DEBUG - Creating converter from 7 to 5
+2025-03-14 00:42:32,971 - h5py._conv - DEBUG - Creating converter from 5 to 7
+2025-03-14 00:42:33,809 - matplotlib - DEBUG - matplotlib data path: C:\Users\North\AppData\Local\Programs\Python\Python311\Lib\site-packages\matplotlib\mpl-data
+2025-03-14 00:42:33,814 - matplotlib - DEBUG - CONFIGDIR=C:\Users\North\.matplotlib
+2025-03-14 00:42:33,815 - matplotlib - DEBUG - interactive is False
+2025-03-14 00:42:33,815 - matplotlib - DEBUG - platform is win32
+2025-03-14 00:42:33,856 - matplotlib - DEBUG - CACHEDIR=C:\Users\North\.matplotlib
+2025-03-14 00:42:33,868 - matplotlib.font_manager - DEBUG - Using fontManager instance from C:\Users\North\.matplotlib\fontlist-v390.json
+2025-03-14 00:42:34,055 - bitsandbytes.cextension - DEBUG - Loading bitsandbytes native library from: C:\Users\North\AppData\Local\Programs\Python\Python311\Lib\site-packages\bitsandbytes\libbitsandbytes_cuda121.dll
+2025-03-14 00:42:34,186 - accelerate.utils.modeling - INFO - We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+2025-03-14 00:42:34,195 - falcon_llm - ERROR - Errore nel caricamento del modello: Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. 
+2025-03-14 00:42:34,198 - falcon_llm - DEBUG - Detailed error: Traceback (most recent call last):
+  File "C:\Users\North\GT7-Guru-Assistant-3.0\falcon_llm.py", line 86, in __init__
+    self.model = AutoModelForCausalLM.from_pretrained(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\North\AppData\Local\Programs\Python\Python311\Lib\site-packages\transformers\models\auto\auto_factory.py", line 559, in from_pretrained
+    return model_class.from_pretrained(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\North\AppData\Local\Programs\Python\Python311\Lib\site-packages\transformers\modeling_utils.py", line 262, in _wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\North\AppData\Local\Programs\Python\Python311\Lib\site-packages\transformers\modeling_utils.py", line 4262, in from_pretrained
+    hf_quantizer.validate_environment(device_map=device_map)
+  File "C:\Users\North\AppData\Local\Programs\Python\Python311\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py", line 103, in validate_environment
+    raise ValueError(
+ValueError: Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. 
+

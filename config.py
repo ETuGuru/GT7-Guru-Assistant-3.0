@@ -2,7 +2,7 @@
 
 import os
 
-DB_PATH = "gt7_telemetry.db"
+DB_PATH = "telemetry.db"
 
 # Frequenza (Hz) per la telemetria
 TELEMETRY_HZ = 10

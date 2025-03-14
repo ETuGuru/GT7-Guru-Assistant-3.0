@@ -1,3 +1,24 @@
+def create_thread_safe_connection(db_path):
+    """
+    Crea una connessione SQLite configurata per essere thread-safe
+    
+    Args:
+        db_path: Percorso al file del database SQLite
+        
+    Returns:
+        tuple: (connessione, lock) per l'accesso thread-safe
+    """
+    import sqlite3
+    import threading
+    
+    # Crea una connessione con check_same_thread=False per permettere l'uso da thread diversi
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    
+    # Crea un lock per sincronizzare l'accesso
+    lock = threading.Lock()
+    
+    return conn, lock
+
 # db_manager.py
 
 import sqlite3
@@ -185,3 +206,102 @@ def clear_telemetry(conn):
     c = conn.cursor()
     c.execute("DELETE FROM telemetry")
     conn.commit()
+
+def initialize_database(conn):
+    """
+    Crea le tabelle necessarie se non esistono già
+    """
+    try:
+        cursor = conn.cursor()
+        # Creazione tabella telemetria principale
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS telemetry (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp REAL,
+                package_id INTEGER,
+                car_id INTEGER,
+                best_lap REAL,
+                last_lap REAL,
+                current_lap INTEGER,
+                total_laps INTEGER,
+                current_gear INTEGER,
+                suggested_gear INTEGER,
+                gear_1 REAL,
+                gear_2 REAL,
+                gear_3 REAL,
+                gear_4 REAL,
+                gear_5 REAL,
+                gear_6 REAL,
+                gear_7 REAL,
+                gear_8 REAL,
+                fuel_capacity REAL,
+                current_fuel REAL,
+                car_speed REAL,
+                tyre_speed_fl REAL,
+                tyre_speed_fr REAL,
+                tyre_speed_rl REAL,
+                tyre_speed_rr REAL,
+                position_x REAL,
+                position_y REAL,
+                position_z REAL,
+                velocity_x REAL,
+                velocity_y REAL,
+                velocity_z REAL,
+                rotation_pitch REAL,
+                rotation_yaw REAL,
+                rotation_roll REAL,
+                angular_velocity_x REAL,
+                angular_velocity_y REAL,
+                angular_velocity_z REAL,
+                oil_temp REAL,
+                water_temp REAL,
+                tyre_temp_fl REAL,
+                tyre_temp_fr REAL,
+                tyre_temp_rl REAL,
+                tyre_temp_rr REAL,
+                oil_pressure REAL,
+                ride_height REAL,
+                suspension_fl REAL,
+                suspension_fr REAL,
+                suspension_rl REAL,
+                suspension_rr REAL,
+                current_position INTEGER,
+                total_positions INTEGER,
+                throttle REAL,
+                rpm REAL,
+                rpm_rev_warning REAL,
+                brake REAL,
+                boost REAL,
+                rpm_rev_limiter REAL,
+                estimated_top_speed REAL,
+                clutch REAL,
+                clutch_engaged REAL,
+                rpm_after_clutch REAL,
+                is_paused INTEGER,
+                in_race INTEGER,
+                car_model TEXT,
+                tyre_type TEXT,
+                circuit_name TEXT,
+                lateral_g REAL,
+                longitudinal_g REAL,
+                brake_temp_fl REAL,
+                brake_temp_fr REAL,
+                brake_temp_rl REAL,
+                brake_temp_rr REAL,
+                brake_pressure_fl REAL,
+                brake_pressure_fr REAL,
+                brake_pressure_rl REAL,
+                brake_pressure_rr REAL
+            )
+        """)
+        
+        # Crea indici per migliorare le performance delle query
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_timestamp ON telemetry(timestamp)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_car_id ON telemetry(car_id)")
+        
+        conn.commit()
+        print("[DB] Database inizializzato con successo")
+        return True
+    except Exception as e:
+        print(f"[DB] Errore nell'inizializzazione del database: {e}")
+        return False
