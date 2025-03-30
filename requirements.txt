@@ -1,5 +1,5 @@
 # Core dependencies
-tensorflow==2.12.0  # Specific version compatible with our project
+tensorflow==2.12.1  # Updated to patch segfault vulnerability in array_ops.upper_bound
 tensorflow-io==0.31.0
 tensorflow-hub==0.13.0
 numpy>=1.23.5,<2.0.0
