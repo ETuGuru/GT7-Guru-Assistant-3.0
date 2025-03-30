@@ -1,0 +1,3 @@
+<file-pattern> filter=lfs diff=lfs merge=lfs -text
+<C:/Users/North/GT7-Guru-Assistant-3.0> filter=lfs diff=lfs merge=lfs -text
+C:/Users/North/GT7-Guru-Assistant-3.0 filter=lfs diff=lfs merge=lfs -text
