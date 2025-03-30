@@ -1,3 +1,17 @@
+# AI Models Directory
+
+This directory contains the AI models used by the application.
+
+## Required Files
+- gemma-3-4b-it-Q4_K_M.gguf (approximately 2.5GB)
+
+## Installation
+1. Download the model from Hugging Face or other AI model repositories
+2. Place the .gguf file in this directory
+3. Ensure the model filename matches exactly
+
+Note: Model files are too large for GitHub and must be downloaded separately.
+
 # AI Models
 
 This directory is designated for storing AI models used by the project.

@@ -1,5 +1,22 @@
 # llama.cpp Integration
 
+This directory contains the llama.cpp library integration for running the Gemma model.
+
+## Setup
+1. Clone llama.cpp repository
+2. Build the library following installation instructions
+3. Copy necessary files to this directory
+
+## Configuration
+The library is configured to work with:
+- Gemma 3B model
+- 4-bit quantization
+- CPU inference
+
+Note: Binary files and build artifacts are ignored by Git.
+
+# llama.cpp Integration
+
 This directory contains the llama.cpp implementation for the project.
 
 ## Building llama.cpp
