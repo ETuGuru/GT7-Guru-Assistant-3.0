@@ -9,3 +9,5 @@ C:/Users/North/GT7-Guru-Assistant-3.0/lib/tensorflow/python/_pywrap_tensorflow_i
 C:/Users/North/GT7-Guru-Assistant-3.0/models/gemma-3-4b-it-Q4_K_M.gguf filter=lfs diff=lfs merge=lfs -text
 C:/Users/North/GT7-Guru-Assistant-3.0/lib/tensorflow/python/_pywrap_tensorflow_internal.pyd filter=lfs diff=lfs merge=lfs -text
 C:/Users/North/GT7-Guru-Assistant-3.0/models/gemma-3-4b-it-Q4_K_M.gguf filter=lfs diff=lfs merge=lfs -text
+*.pyd filter=lfs diff=lfs merge=lfs -text
+*.gguf filter=lfs diff=lfs merge=lfs -text
