@@ -1,4 +1,49 @@
-# GT7 Guru Assistant 3.0
+# Analisi del flusso di aggiornamento dei parametri auto
+
+## Panoramica del processo
+
+Il sistema è progettato per aggiornare correttamente i parametri dell'auto nel database quando vengono modificati nell'interfaccia utente. Questo avviene attraverso il seguente flusso:
+
+1. L'utente modifica i parametri nell'interfaccia grafica
+2. Quando l'utente preme il pulsante di salvataggio, viene chiamata la funzione `save_car_defaults()`
+3. Per ogni parametro modificato, viene chiamata la funzione `update_car_parameter()`
+4. Il database viene aggiornato con i nuovi valori
+5. La funzione `load_car_parameters_batch()` verifica che l'aggiornamento sia avvenuto correttamente
+
+## Analisi dettagliata
+
+### In `save_car_defaults()` (main.py):
+
+La funzione esegue questi passaggi:
+- Raccoglie l'ID dell'auto dall'interfaccia utente
+- Verifica che l'ID sia valido
+- Crea l'auto nel database se non esiste già
+- Raccoglie tutti i valori dai campi di input utilizzando il mapping dei parametri
+- Combina tutti i parametri da salvare (parametri standard e parametri base)
+- Chiama `update_car_parameter()` per ogni parametro
+- Verifica dopo il salvataggio che i valori siano stati salvati correttamente
+
+La verifica post-salvataggio è importante: recupera i valori dal database e li confronta con quelli che si intendeva salvare, mostrando un messaggio di errore in caso di incongruenza.
+
+### In `update_car_parameter()` (car_setup_manager.py):
+
+Questa funzione:
+- Si connette al database
+- Esegue una query UPDATE per aggiornare il valore del parametro
+- La query aggiorna solo il record corrispondente al car_id e param_name specificati
+
+```sql
+UPDATE car_parameters
+SET param_value = ?
+WHERE car_id = ? AND param_name = ?
+```
+
+## Conclusioni
+
+Il sistema è progettato per gestire correttamente l'aggiornamento dei parametri dell'auto. Quando l'utente modifica un parametro e salva, il database viene aggiornato con il nuovo valore. La verifica post-salvataggio assicura che i dati siano stati salvati correttamente.
+
+Se un parametro non esiste ancora nel database per quell'auto, dovrebbe prima essere creato con la funzione `create_car_parameter()` (non mostrata nel codice fornito), che presumibilmente viene chiamata durante l'inizializzazione dell'auto.
+
 # GT7 Guru Assistant 3.0
 
 ## Overview / Panoramica
