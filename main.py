@@ -8,10 +8,6 @@ import sqlite3
 import sys
 import threading
 
-# Aggiungi la cartella lib al path di Python
-lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib')
-sys.path.insert(0, lib_path)
-
 # Variabili globali per la gestione dei giri
 telemetry_buffer = []  # Buffer per accumulare dati di telemetria
 lap_count = 0  # Conta i giri completati
@@ -105,11 +101,11 @@ class GT7GuruGUI:
 
         # Aggiorna il dizionario config se mancano le nuove chiavi
         if "peso" not in self.config:
-            self.config["peso"] = ""
+            self.config["peso"] = "1200"
         if "potenza" not in self.config:
-            self.config["potenza"] = ""
+            self.config["potenza"] = "600"
         if "trazione" not in self.config:
-            self.config["trazione"] = ""
+            self.config["trazione"] = "FR"
 
         # Inizializza DB telemetria
         try:
@@ -137,7 +133,7 @@ class GT7GuruGUI:
         self.llm_loaded = False
         self.llm_load_error = None
         self.latest_telemetry = {}
-        self.model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "gemma-3-4b-it-Q4_K_M.gguf")
+        self.model_path = os.path.join("C:\\Users\\North\\GT7-Guru-Assistant-3.0\\models", "gemma-3-4b-it-Q4_K_M.gguf")
         
         # Try to initialize the LLM during startup with validation
         try:
@@ -199,24 +195,21 @@ class GT7GuruGUI:
         self.label_weight = ttk.Label(self.tab_context, text="Peso (kg):")
         self.label_weight.grid(row=1, column=2, sticky="e", padx=5, pady=2)
         self.entry_weight = ttk.Entry(self.tab_context, width=10)
-        self.entry_weight.insert(0, self.config.get("peso", ""))
+        self.entry_weight.insert(0, "1200")
         self.entry_weight.grid(row=1, column=3, padx=5, pady=2)
         self.entry_weight.bind("<KeyRelease>", self.update_power_to_weight_ratio)
 
         self.label_power = ttk.Label(self.tab_context, text="Potenza (CV):")
         self.label_power.grid(row=2, column=0, sticky="e", padx=5, pady=2)
         self.entry_power = ttk.Entry(self.tab_context, width=10)
-        self.entry_power.insert(0, self.config.get("potenza", ""))
+        self.entry_power.insert(0, "600")
         self.entry_power.grid(row=2, column=1, padx=5, pady=2)
         self.entry_power.bind("<KeyRelease>", self.update_power_to_weight_ratio)
 
         self.label_drive_train = ttk.Label(self.tab_context, text="Trazione:")
         self.label_drive_train.grid(row=2, column=2, sticky="e", padx=5, pady=2)
         self.combo_drive_train = ttk.Combobox(self.tab_context, width=8, values=["FF", "FR", "MR", "RR", "4WD"], state="readonly")
-        if self.config.get("trazione") in ["FF", "FR", "MR", "RR", "4WD"]:
-            self.combo_drive_train.set(self.config["trazione"])
-        else:
-            self.combo_drive_train.set("")
+        self.combo_drive_train.current(1)  # Default Ã¨ FR (indice 1)
         self.combo_drive_train.grid(row=2, column=3, padx=5, pady=2)
 
         self.label_power_weight_ratio = ttk.Label(self.tab_context, text="Rapporto peso/potenza:")
@@ -436,7 +429,7 @@ class GT7GuruGUI:
         # Creazione frame e label per la telemetria
         self.frame_basic_info = ttk.LabelFrame(self.tab_telemetry, text="Informazioni Base", style='TLabelframe')
         self.frame_basic_info.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-        ttk.Label(self.frame_basic_info, text="VelocitÃ  (km/h):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ttk.Label(self.frame_basic_info, text="VelocitÃ  (km/h):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         self.lbl_speed = ttk.Label(self.frame_basic_info, text="0", font=('Segoe UI', 16, 'bold'))
         self.lbl_speed.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
@@ -756,62 +749,123 @@ class GT7GuruGUI:
     def set_value(self, entry_widget, value, formatted_value=None):
         """Imposta il valore di un widget Entry preservando il formato originale se disponibile"""
         entry_widget.delete(0, tk.END)
-        if value is not None:  # Solo se il valore non Ã¨ None
+        if value is not None:
             if formatted_value is not None:
                 # Usiamo il formato originale se disponibile
                 entry_widget.insert(0, formatted_value)
             else:
-                # Altrimenti convertiamo in stringa mantenendo gli zeri finali per decimali come 5.10
-                if isinstance(value, float):
-                    # Se Ã¨ un valore con decimali, preserviamo fino a 2 decimali
-                    entry_widget.insert(0, f"{value:.2f}".rstrip('0').rstrip('.') if '.' in f"{value:.2f}" else str(value))
+                # Gestione speciale per valori di convergenza
+                if isinstance(value, float) and entry_widget in [self.entry_conv_ant, self.entry_conv_post]:
+                    # Forza il segno + per valori positivi di convergenza
+                    entry_widget.insert(0, f"{'+' if value > 0 else ''}{value:.2f}")
+                elif isinstance(value, float):
+                    # Per altri valori float, preserva fino a 2 decimali se necessario
+                    formatted = f"{value:.2f}".rstrip('0').rstrip('.')
+                    entry_widget.insert(0, formatted)
                 else:
                     entry_widget.insert(0, str(value))
+        logger.debug(f"Widget value set: original={value}, formatted={formatted_value}, final={entry_widget.get()}")
 
+    def verify_parameter_mapping(self):
+        """Verifica la corrispondenza tra parametri DB e widget UI"""
+        missing_widgets = []
+        for param_name in self.PARAMETER_MAPPING.keys():
+            widget = self.PARAMETER_MAPPING.get(param_name)
+            if widget is None:
+                missing_widgets.append(param_name)
+                logger.warning(f"Parametro {param_name} non ha un widget UI corrispondente")
+        return len(missing_widgets) == 0
     def load_car_defaults(self):
         car_id = self.entry_car_id.get().strip()
         if not car_id:
             messagebox.showwarning("Car ID", "Inserisci un Car ID valido.")
             return
 
-        logger.debug(f"Caricamento parametri per Car ID: {car_id}")
+        logger.info(f"Inizio caricamento parametri per Car ID: {car_id}")
         
-        create_new_car_if_not_exists(car_id, self.entry_car.get().strip() or "Sconosciuta")
+        # Verifica mapping parametri
+        if not self.verify_parameter_mapping():
+            logger.warning("Rilevati parametri senza widget UI corrispondenti")
         
-        # Carica tutti i parametri in batch
-        logger.info(f"Caricamento parametri per auto ID: {car_id}")
-        param_data = load_car_parameters_batch(car_id, list(self.PARAMETER_MAPPING.keys()))
+        # Carica i dati dell'auto dal database
+        try:
+            car_data = get_car_parameters(car_id)
+            if car_data and "car_name" in car_data:
+                car_name = car_data["car_name"]
+                logger.info(f"Nome auto trovato nel DB: {car_name}")
+                self.entry_car.delete(0, tk.END)
+                self.entry_car.insert(0, car_name)
+            else:
+                logger.warning(f"Nome auto non trovato per Car ID {car_id}")
+        except Exception as e:
+            logger.error(f"Errore nel caricamento del nome auto: {str(e)}")
+        
+        # Carica i parametri specifici delle gomme e del circuito
+        param_data = load_car_parameters_batch(car_id, [
+            "tipo_gomme",
+            "circuito",
+            *list(self.PARAMETER_MAPPING.keys())
+        ])
+        
         if not param_data:
-            logger.error(f"Nessun dato trovato per Car ID {car_id}")
-            self.txt_output.insert(tk.END, f"[ERRORE] Nessun dato per Car ID {car_id}.\n")
-            messagebox.showwarning("Load Car_ID", f"Nessun dato per Car ID {car_id}.")
+            error_msg = f"Nessun dato trovato per Car ID {car_id}"
+            logger.error(error_msg)
+            self.txt_output.insert(tk.END, f"[ERRORE] {error_msg}\n")
+            messagebox.showwarning("Load Car_ID", error_msg)
             return
+        # Gestione specifica per gomme e circuito
+        if "tipo_gomme" in param_data:
+            tyre_value = param_data["tipo_gomme"]["value"]
+            logger.info(f"Tipo gomme trovato: {tyre_value}")
+            self.entry_tyre.delete(0, tk.END)
+            self.entry_tyre.insert(0, tyre_value if tyre_value else "")
+        else:
+            logger.warning("Tipo gomme non trovato nel DB")
 
-        # Log dei parametri caricati
-        logger.info(f"Parametri caricati: {len(param_data)} trovati")
+        if "circuito" in param_data:
+            circuit_value = param_data["circuito"]["value"]
+            logger.info(f"Circuito trovato: {circuit_value}")
+            self.entry_circuit.delete(0, tk.END)
+            self.entry_circuit.insert(0, circuit_value if circuit_value else "")
+        else:
+            logger.warning("Circuito non trovato nel DB")
+
+        # Log dettagliato dei parametri caricati
+        logger.info(f"Parametri trovati nel DB: {len(param_data)}")
+        logger.debug(f"Elenco parametri trovati: {list(param_data.keys())}")
         
-        # Imposta i valori nei widget
+        # Imposta i valori nei widget con logging dettagliato
         for param_name, entry_widget in self.PARAMETER_MAPPING.items():
             try:
                 if param_name in param_data:
                     value = param_data[param_name]["value"]
-                    # Ottieni il formato originale se disponibile nel db
                     original_format = param_data[param_name].get("original_format", None)
-                    logger.debug(f"Impostazione {param_name} = {value} (formato: {original_format})")
+                    logger.debug(f"Caricamento {param_name} = {value} (formato originale: {original_format})")
+                    
                     if param_name == "trazione":
                         if value in ["FF", "FR", "MR", "RR", "4WD"]:
                             entry_widget.set(value)
+                            logger.debug(f"Trazione impostata a {value}")
                         else:
-                            entry_widget.set("")  # Lascia vuoto se non valido
+                            entry_widget.set("")
+                            logger.warning(f"Valore trazione non valido: {value}")
                     else:
-                        self.set_value(entry_widget, value, original_format)  # Usa il formato originale se disponibile
+                        self.set_value(entry_widget, value, original_format)
+                        logger.debug(f"Parametro {param_name} impostato: {entry_widget.get()}")
+                else:
+                    logger.warning(f"Parametro {param_name} non trovato nel DB")
             except Exception as e:
-                self.txt_output.insert(tk.END, f"[ERRORE] Parametro {param_name}: {str(e)}\n")
-
-        # Aggiorna il rapporto peso/potenza solo se entrambi i valori sono presenti
+                error_msg = f"Errore impostazione {param_name}: {str(e)}"
+                logger.error(error_msg)
+                self.txt_output.insert(tk.END, f"[ERRORE] {error_msg}\n")
+        # Aggiorna il rapporto peso/potenza
         peso = self.maybe_float(self.entry_weight.get())
         potenza = self.maybe_float(self.entry_power.get())
         if peso is not None and potenza is not None and potenza > 0:
+            self.update_power_to_weight_ratio()
+            logger.info(f"Rapporto peso/potenza aggiornato: {peso/potenza:.2f} kg/CV")
+        else:
+            logger.warning("Impossibile calcolare rapporto peso/potenza: valori mancanti o non validi")
             self.update_power_to_weight_ratio()
 
         self.txt_output.insert(tk.END, "[INFO] Caricamento completato.\n")
@@ -851,9 +905,19 @@ class GT7GuruGUI:
             return
 
         try:
-            # Crea o aggiorna l'auto
-            create_new_car_if_not_exists(car_id, self.entry_car.get().strip() or "Sconosciuta")
-            update_car_name(car_id, self.entry_car.get().strip() or "Sconosciuta")
+            # Salva nome auto, tipo gomme e circuito
+            car_name = self.entry_car.get().strip()
+            create_new_car_if_not_exists(car_id, car_name)
+            update_car_name(car_id, car_name)
+            
+            # Salva tipo gomme e circuito
+            tyre_type = self.entry_tyre.get().strip()
+            circuit = self.entry_circuit.get().strip()
+            
+            update_car_parameter(car_id, "tipo_gomme", tyre_type)
+            update_car_parameter(car_id, "circuito", circuit)
+            
+            logger.info(f"Salvati dati base: Auto={car_name}, Gomme={tyre_type}, Circuito={circuit}")
 
             # Gestione dei parametri base (peso, potenza, trazione)
             peso_value = self.entry_weight.get().strip()
@@ -893,7 +957,7 @@ class GT7GuruGUI:
 
             # Procedi con il salvataggio degli altri parametri
             for param_name, entry_widget in self.PARAMETER_MAPPING.items():
-                # Salta i parametri base che sono giÃ  stati gestiti
+                # Salta i parametri base che sono giÃ  stati gestiti
                 if param_name in ["peso", "potenza", "trazione"]:
                     continue
                 
@@ -1082,7 +1146,7 @@ class GT7GuruGUI:
                 return
             
             self.txt_output.insert(tk.END, "[INFO] Modello addestrato.\n")
-            rows = load_recent_telemetry(self.db_conn, limit=50)
+            rows = load_recent_telemetry(self.db_conn)
             telemetry_batch = []
             for r in rows:
                 tdict = {
@@ -1434,7 +1498,7 @@ class GT7GuruGUI:
         if not update_success:
             logger.error("Aggiornamento widget suggerimenti fallito")
             self.txt_output.insert(tk.END, "[ERRORE] Impossibile visualizzare il suggerimento nel widget\n")
-        # Evidenzia anche i suggerimenti nel log output per migliore visibilitÃ 
+        # Evidenzia anche i suggerimenti nel log output per migliore visibilitÃ 
         self.txt_output.insert(tk.END, "\n[SUGGERIMENTI LLM] Analisi completata! Controlla il riquadro 'Suggerimenti AI' per i dettagli.\n\n")
         
     def _update_suggestion_widget(self, content, source_label="LLM"):
@@ -1472,7 +1536,7 @@ class GT7GuruGUI:
             return False
             
         try:
-            # Verifica che il widget sia ancora valido controllando una proprietÃ 
+            # Verifica che il widget sia ancora valido controllando una proprietÃ 
             current_state = self.txt_suggest.cget('state')
             logger.debug(f"Stato attuale del widget txt_suggest: {current_state}")
         except tk.TclError as e:
@@ -1602,7 +1666,7 @@ class GT7GuruGUI:
         self.txt_output.insert(tk.END, f"{resp}\n")
         self.txt_output.insert(tk.END, "-"*50 + "\n")
         
-        # Mostra anche i suggerimenti nel pannello dedicato per maggiore visibilitÃ 
+        # Mostra anche i suggerimenti nel pannello dedicato per maggiore visibilitÃ 
         logger.info("Aggiornamento widget suggerimenti con risposta feedback")
         
         # Utilizzo il metodo di utility per aggiornare in sicurezza il widget

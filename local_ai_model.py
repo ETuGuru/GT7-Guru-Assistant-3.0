@@ -140,23 +140,26 @@ def train_model():
 def infer_advice_on_batch(telemetry_batch):
     """
     Analizza un batch di dati telemetrici raccolti in un giro completo.
-    Esegue analisi solo se il giro e completato.
+    Esegue analisi solo se il giro è completato.
     """
     model = load_model()
     if model is None:
-        return "Modello inesistente. Fai training prima."
-        
-    # Se il batch e troppo piccolo, aspetta altri dati
-    if not telemetry_batch or len(telemetry_batch) < 150:  # Aumentato da 50 a 150
-        return "Dati insufficienti per analisi. Attendere più dati."
-        
-    print(f"Analisi di {len(telemetry_batch)} pacchetti di telemetria su un giro completato...")
-    
+        return "⚠️ Modello inesistente. Fai training prima."
+
+    if not telemetry_batch:
+        return "⚠️ Nessun dato ricevuto. Impossibile eseguire l’analisi."
+
+    # Controllo dimensione batch minima
+    if len(telemetry_batch) < 150:
+        return f"⚠️ Solo {len(telemetry_batch)} pacchetti disponibili. Attendere più dati."
+
+    print(f"✅ Analisi di {len(telemetry_batch)} pacchetti di telemetria su un giro completato...")
+
     X_list = []
     for td in telemetry_batch:
         try:
             feats = extract_features(td, verbose_logging=False)
-            
+
             base_features = [
                 feats["car_speed_kmh"],
                 feats["avg_slip_ratio"],
@@ -165,7 +168,7 @@ def infer_advice_on_batch(telemetry_batch):
                 feats["rpm"],
                 feats["gear"]
             ]
-            
+
             grip_features = [
                 (feats["slip_ratios"]["FL"] + feats["slip_ratios"]["FR"]) / 2.0,
                 (feats["slip_ratios"]["RL"] + feats["slip_ratios"]["RR"]) / 2.0,
@@ -173,30 +176,34 @@ def infer_advice_on_batch(telemetry_batch):
                 (feats["tyre_temps"]["FL"] + feats["tyre_temps"]["FR"]) / 2.0 -
                 (feats["tyre_temps"]["RL"] + feats["tyre_temps"]["RR"]) / 2.0
             ]
-            
+
             stability_features = [
                 feats.get("suspension_balance", 0.0),
                 feats.get("lateral_balance", 0.0),
                 feats.get("body_roll", 0.0),
                 feats.get("body_pitch", 0.0)
             ]
-            
-            # Combina tutte le feature
+
             x_vec = base_features + grip_features + stability_features
             X_list.append(x_vec)
-            
+
         except Exception as e:
-            print(f"Errore estrazione feature per un pacchetto: {e}")
+            print(f"⚠️ Errore estrazione feature per un pacchetto: {e}")
             continue
-            
+
     if not X_list:
-        return "Errore elaborazione dati telemetrici."
-        
+        return "❌ Errore elaborazione dati telemetrici. Nessun vettore valido estratto."
+
     X = np.array(X_list, dtype=np.float32)
-    predictions = model.predict(X, verbose=0)  # Disabilita output verboso di TensorFlow
+    predictions = model.predict(X, verbose=0)
     avg_prediction = float(np.mean(predictions))
-    
-    return f"Tempo stimato: {avg_prediction:.2f}s. Analisi completata."
+    avg_prediction /= 1000  # da ms → s
+
+    minuti = int(avg_prediction // 60)
+    secondi = avg_prediction % 60
+    tempo_formattato = f"{minuti}:{secondi:05.2f}"
+
+    return f"⏱️ Tempo stimato: {tempo_formattato} (≈ {avg_prediction:.2f} s). Analisi completata con successo."
     
 def load_model():
     try:

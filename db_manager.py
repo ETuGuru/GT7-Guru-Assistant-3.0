@@ -198,9 +198,12 @@ def load_all_telemetry(conn):
     c.execute("SELECT * FROM telemetry ORDER BY id ASC")
     return c.fetchall()
 
-def load_recent_telemetry(conn, limit=50):
+def load_recent_telemetry(conn, limit=None):
     c = conn.cursor()
-    c.execute("SELECT * FROM telemetry ORDER BY id DESC LIMIT ?", (limit,))
+    if limit is None:
+        c.execute("SELECT * FROM telemetry ORDER BY id DESC")
+    else:
+        c.execute("SELECT * FROM telemetry ORDER BY id DESC LIMIT ?", (limit,))
     return c.fetchall()
 def clear_telemetry(conn):
     c = conn.cursor()

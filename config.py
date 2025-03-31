@@ -16,3 +16,6 @@ LOCAL_TF_MODEL_PATH = "local_tf_model"
 
 # Imposta il modello Falcon-7B invece di GPT-J
 LOCAL_LLM_MODEL_NAME = "tiiuae/falcon-7b-instruct"
+
+# LLM - Configurazione token massimo per risposta
+LLM_MAX_TOKENS = 2048
